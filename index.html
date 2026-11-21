@@ -88,7 +88,7 @@ for(const x of [-.22,.22]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.
 
 player.position.set(0,0,8);
 // First infected: slow patrol, detects the player, then pursues and attacks at close range
-const infected=new THREE.Group();scene.add(infected);infected.position.set(3.5,0,-10);
+const infected=new THREE.Group();infected.scale.setScalar(1.12);scene.add(infected);infected.position.set(.8,0,2);
 const zombieSkin=new THREE.MeshStandardMaterial({color:0x78806a,roughness:1});
 const tornClothes=new THREE.MeshStandardMaterial({color:0x51483d,roughness:1});
 const zombieBody=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.8,4,7),tornClothes);zombieBody.position.y=1.05;zombieBody.castShadow=true;infected.add(zombieBody);
@@ -97,7 +97,8 @@ const eyeMat=new THREE.MeshBasicMaterial({color:0xd5a36a});
 for(const ex of [-.105,.105]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,6,6),eyeMat);eye.position.set(ex,1.89,-.27);infected.add(eye)}
 for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.55,3,6),zombieSkin);arm.position.set(side*.48,1.12,-.12);arm.rotation.z=side*.22;infected.add(arm);const leg=new THREE.Mesh(new THREE.CylinderGeometry(.13,.16,.68,6),tornClothes);leg.position.set(side*.19,.35,0);infected.add(leg)}
 const infectedShadow=new THREE.Mesh(new THREE.CircleGeometry(.58,16),new THREE.MeshBasicMaterial({color:0x080b08,transparent:true,opacity:.4}));infectedShadow.rotation.x=-Math.PI/2;infectedShadow.position.y=.02;infected.add(infectedShadow);
-const infectedHome=new THREE.Vector3(3.5,0,-10);let infectedMode='wander',wanderClock=0,attackClock=0,playerHP=100;
+const infectedMarker=new THREE.Mesh(new THREE.TorusGeometry(.78,.055,6,28),new THREE.MeshStandardMaterial({color:0x9d4033,emissive:0x54170f,emissiveIntensity:.8,roughness:.8}));infectedMarker.rotation.x=Math.PI/2;infectedMarker.position.y=.035;infected.add(infectedMarker);
+const infectedHome=new THREE.Vector3(.8,0,2);let infectedMode='wander',wanderClock=0,attackClock=0,playerHP=100;
 const hpText=document.querySelector('#hpText'),hpFill=document.querySelector('#hpFill'),enemyText=document.querySelector('#enemyText');
 function updateInfected(dt){
  const dx=player.position.x-infected.position.x,dz=player.position.z-infected.position.z,dist=Math.hypot(dx,dz);
