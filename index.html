@@ -51,7 +51,7 @@
 #questPanel.open{display:block}#questPanel h3{margin:0 0 8px;font-size:16px;color:#d9bd86}#questPanel p{font-size:12px;line-height:1.7;color:#c9c4b4;margin:8px 0}
 #questPanel .quest-step{padding:9px;margin:7px 0;background:#292d25;border-left:3px solid #8e805e;font-size:12px;line-height:1.6}
 #questPanel .quest-step.done{border-left-color:#8caa76;color:#aebc9e}#questPanel button{float:right;background:#34392f;color:#eee;border:1px solid #777;padding:5px 9px;border-radius:3px}
-#questTrack{position:fixed;left:14px;top:calc(env(safe-area-inset-top) + 82px);z-index:9;max-width:min(62vw,230px);padding:7px 9px;background:#151a16c9;border:1px solid #b7a57a66;border-radius:4px;color:#eee2c8;font-size:10px;line-height:1.5;pointer-events:none}
+#storyDialog{position:fixed;z-index:40;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translateX(-50%);width:min(90vw,390px);padding:13px 14px;background:linear-gradient(135deg,#191d19f5,#29271ff5);border:1px solid #b49b70;border-radius:7px;color:#eee5d2;display:none;box-shadow:0 8px 30px #000b}#storyDialog.open{display:block}#storySpeaker{font-size:13px;color:#d7b87c;font-weight:bold;margin-bottom:7px}#storyLine{font-size:13px;line-height:1.8;min-height:54px}#storyDialog button{float:right;margin-top:9px;padding:7px 15px;background:#756044;color:#fff;border:1px solid #b69a6c;border-radius:4px}#questTrack{position:fixed;left:14px;top:calc(env(safe-area-inset-top) + 82px);z-index:9;max-width:min(62vw,230px);padding:7px 9px;background:#151a16c9;border:1px solid #b7a57a66;border-radius:4px;color:#eee2c8;font-size:10px;line-height:1.5;pointer-events:none}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
@@ -63,7 +63,7 @@
 <div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button></div>
 <button id="attack" aria-label="攻击感染者">攻击</button>
 <div id="foot">靠近资源后点击交互采集</div>
-<button id="questButton">主线任务</button><div id="questTrack">主线 · 秋日森林<br>寻找废弃营地</div><div id="questPanel"><button id="questClose">关闭</button><h3>第一章　秋日森林 · 撤离信号</h3><p>灾变后的森林寂静得反常。你在废弃营地醒来，唯一能确认的是：有人曾试图沿北边公路撤离。</p><div id="questSteps"></div><p id="questEpilogue">沿着线索前进，寻找仍然活着的人。</p></div><div id="loading">正在生成森林环境…</div>
+<button id="questButton">主线任务</button><div id="questTrack">主线 · 秋日森林<br>寻找废弃营地</div><div id="storyDialog"><div id="storySpeaker">幸存者 · 林</div><div id="storyLine"></div><button id="storyNext">继续</button></div><div id="questPanel"><button id="questClose">关闭</button><h3>第一章　秋日森林 · 撤离信号</h3><p>灾变后的森林寂静得反常。你在废弃营地醒来，唯一能确认的是：有人曾试图沿北边公路撤离。</p><div id="questSteps"></div><p id="questEpilogue">沿着线索前进，寻找仍然活着的人。</p></div><div id="loading">正在生成森林环境…</div>
 <script type="module">
 import * as THREE from 'three';
 const mount=document.querySelector('#game');
@@ -298,7 +298,7 @@ const radioMarker=new THREE.Mesh(new THREE.TorusGeometry(.72,.045,6,24),new THRE
 let radioNoteRead=false;try{radioNoteRead=localStorage.getItem('lifeafterClassic_radio_note_v1')==='read'}catch(e){}radioMarker.visible=!radioNoteRead;
 function readRadioNote(){if(radioNoteRead)return false;if(Math.hypot(player.position.x-7,player.position.z+40)>3.2)return false;radioNoteRead=true;markMainQuest('radio');radioMarker.visible=false;try{localStorage.setItem('lifeafterClassic_radio_note_v1','read')}catch(e){}playGameSfx('pickup');hint.textContent='录音残片：撤离前，北边公路连续传来三次求救信号。我们留下了最后一箱药品……';return true}
 function searchSupplyCrate(){if(supplyOpened)return false;if(Math.hypot(player.position.x-1,player.position.z+25)>3.2)return false;supplyOpened=true;markMainQuest('camp');crateLid.rotation.x=-1.05;crateLid.position.set(0,.78,-.27);crateMarker.visible=false;wood+=4;stone+=2;food+=1;water+=1;refreshInventory();document.querySelector('#foodCount').textContent=food;document.querySelector('#waterCount').textContent=water;try{localStorage.setItem('lifeafterClassic_supply_v1','opened')}catch(e){}saveGame();playGameSfx('pickup');hint.textContent='搜到废弃补给箱：木头×4、石头×2、食物×1、水×1';return true}
-function updateExplorationHint(){const rd=Math.hypot(player.position.x-7,player.position.z+40);if(!radioNoteRead&&rd<5){hint.textContent=rd<3.2?'发现废弃求救电台 · 点击交互读取记录':'前方有微弱的无线电信号';return}if(!checkpointSearched){const cd=Math.hypot(player.position.x+9.75,player.position.z+38.35);if(cd<5){hint.textContent=cd<3.2?'发现废弃公路检查站 · 点击交互搜索物资':'前方有一处废弃公路检查站';return}}if(!bridgePackSearched){const bd=Math.hypot(player.position.x+12.35,player.position.z+55.85);if(bd<5){hint.textContent=bd<3.2?'发现桥边幸存者背包 · 点击交互搜索':'前方是坍塌的公路桥';return}}if(!supplyOpened){const d=Math.hypot(player.position.x-1,player.position.z+25);if(d<5){hint.textContent=d<3.2?'发现补给箱 · 点击交互搜索':'前方有一处废弃营地';return}}}
+function updateExplorationHint(){if(nearSurvivor()&&!mainQuestFlags.survivorTalk){hint.textContent='发现幸存者 · 林 · 点击交谈';return}const rd=Math.hypot(player.position.x-7,player.position.z+40);if(!radioNoteRead&&rd<5){hint.textContent=rd<3.2?'发现废弃求救电台 · 点击交互读取记录':'前方有微弱的无线电信号';return}if(!checkpointSearched){const cd=Math.hypot(player.position.x+9.75,player.position.z+38.35);if(cd<5){hint.textContent=cd<3.2?'发现废弃公路检查站 · 点击交互搜索物资':'前方有一处废弃公路检查站';return}}if(!bridgePackSearched){const bd=Math.hypot(player.position.x+12.35,player.position.z+55.85);if(bd<5){hint.textContent=bd<3.2?'发现桥边幸存者背包 · 点击交互搜索':'前方是坍塌的公路桥';return}}if(!supplyOpened){const d=Math.hypot(player.position.x-1,player.position.z+25);if(d<5){hint.textContent=d<3.2?'发现补给箱 · 点击交互搜索':'前方有一处废弃营地';return}}}
 document.querySelector('#makeFire').addEventListener('click',buildCampfire);
 document.querySelector('#makeBench').addEventListener('click',buildWorkbench);
 document.querySelector('#makeBarricade').addEventListener('click',buildBarricade);
@@ -311,7 +311,7 @@ bagPanel.addEventListener('click',e=>{if(e.target===bagPanel)closeBag()});
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeBag();closeBuild();closeCraft()}});
 // V0.8.0: persistent main-story quest journal, using existing exploration locations
 const MAIN_QUEST_KEY='lifeafterClassic_main_quest_v1';
-let mainQuestFlags={camp:false,radio:false,checkpoint:false,bridgePack:false,bridgeInfected:false};
+let mainQuestFlags={camp:false,survivorTalk:false,radio:false,checkpoint:false,bridgePack:false,bridgeInfected:false};
 try{const q=JSON.parse(localStorage.getItem(MAIN_QUEST_KEY)||'{}');for(const k of Object.keys(mainQuestFlags))mainQuestFlags[k]=q[k]===true}catch(e){}
 mainQuestFlags.camp=mainQuestFlags.camp||supplyOpened;
 mainQuestFlags.radio=mainQuestFlags.radio||radioNoteRead;
@@ -319,13 +319,27 @@ mainQuestFlags.checkpoint=mainQuestFlags.checkpoint||checkpointSearched;
 mainQuestFlags.bridgePack=mainQuestFlags.bridgePack||bridgePackSearched;
 if(mainQuestFlags.bridgeInfected){bridgeEnemyAlive=false;bridgeInfected.visible=false}
 function saveMainQuest(){try{localStorage.setItem(MAIN_QUEST_KEY,JSON.stringify(mainQuestFlags))}catch(e){}}
-function markMainQuest(k){if(!(k in mainQuestFlags)||mainQuestFlags[k])return;mainQuestFlags[k]=true;saveMainQuest();renderMainQuest();const names={camp:'找到废弃营地补给',radio:'读取求救电台录音',checkpoint:'调查公路检查站',bridgePack:'搜索桥边幸存者背包',bridgeInfected:'清理桥下感染者'};hint.textContent='主线进展：'+names[k]}
-function getMainQuestIndex(){return ['camp','radio','checkpoint','bridgePack','bridgeInfected'].findIndex(k=>!mainQuestFlags[k])}
-function renderMainQuest(){const steps=[['camp','搜索废弃营地的补给箱'],['radio','读取废弃求救电台的录音'],['checkpoint','调查废弃公路检查站'],['bridgePack','搜索桥边幸存者背包'],['bridgeInfected','击败桥下潜伏的感染者']];const idx=getMainQuestIndex();const names=steps.map(([k,label],i)=>'<div class="quest-step '+(mainQuestFlags[k]?'done':'')+'">'+(mainQuestFlags[k]?'✓':i===idx?'▶':'○')+'　'+label+'</div>').join('');document.querySelector('#questSteps').innerHTML=names;const done=idx===-1;document.querySelector('#questTrack').innerHTML=done?'主线已完成<br>第一章 · 撤离信号':'主线 · 第一章<br>当前目标：'+steps[idx][1];document.querySelector('#questEpilogue').textContent=done?'电台、检查站与桥边的线索已经串联起来。第一章完成；后续章节将继续扩展。':'提示：打开主线任务可查看调查进度。'}
+function markMainQuest(k){if(!(k in mainQuestFlags)||mainQuestFlags[k])return;mainQuestFlags[k]=true;saveMainQuest();renderMainQuest();const names={camp:'找到废弃营地补给',survivorTalk:'与营地幸存者交谈',radio:'读取求救电台录音',checkpoint:'调查公路检查站',bridgePack:'搜索桥边幸存者背包',bridgeInfected:'清理桥下感染者'};hint.textContent='主线进展：'+names[k]}
+function getMainQuestIndex(){return ['camp','survivorTalk','radio','checkpoint','bridgePack','bridgeInfected'].findIndex(k=>!mainQuestFlags[k])}
+function renderMainQuest(){const steps=[['camp','搜索废弃营地的补给箱'],['survivorTalk','与营地幸存者交谈'],['radio','读取废弃求救电台的录音'],['checkpoint','调查废弃公路检查站'],['bridgePack','搜索桥边幸存者背包'],['bridgeInfected','击败桥下潜伏的感染者']];const idx=getMainQuestIndex();const names=steps.map(([k,label],i)=>'<div class="quest-step '+(mainQuestFlags[k]?'done':'')+'">'+(mainQuestFlags[k]?'✓':i===idx?'▶':'○')+'　'+label+'</div>').join('');document.querySelector('#questSteps').innerHTML=names;const done=idx===-1;document.querySelector('#questTrack').innerHTML=done?'主线已完成<br>第一章 · 撤离信号':'主线 · 第一章<br>当前目标：'+steps[idx][1];document.querySelector('#questEpilogue').textContent=done?'电台、检查站与桥边的线索已经串联起来。第一章完成；后续章节将继续扩展。':'提示：打开主线任务可查看调查进度。'}
+// V0.8.1: first survivor NPC and multi-line story conversation
+const survivorNPC=new THREE.Group();survivorNPC.position.set(2.6,0,-24.2);scene.add(survivorNPC);
+const npcCoat=new THREE.MeshStandardMaterial({color:0x514d3e,roughness:1}),npcSkin=new THREE.MeshStandardMaterial({color:0xb28b6b,roughness:1});
+const npcTorso=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.78,4,8),npcCoat);npcTorso.position.y=1.05;npcTorso.castShadow=true;survivorNPC.add(npcTorso);
+const npcHead=new THREE.Mesh(new THREE.SphereGeometry(.25,10,9),npcSkin);npcHead.position.y=1.78;survivorNPC.add(npcHead);
+const npcHair=new THREE.Mesh(new THREE.SphereGeometry(.255,9,7),new THREE.MeshStandardMaterial({color:0x302d27,roughness:1}));npcHair.position.set(0,1.91,-.015);survivorNPC.add(npcHair);
+for(const side of [-1,1]){const limb=new THREE.Mesh(new THREE.CylinderGeometry(.12,.14,.65,7),npcCoat);limb.position.set(side*.17,.34,0);survivorNPC.add(limb);const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.48,3,6),npcCoat);arm.position.set(side*.42,1.02,0);arm.rotation.z=side*.12;survivorNPC.add(arm)}
+const npcMarker=new THREE.Mesh(new THREE.TorusGeometry(.58,.04,6,22),new THREE.MeshBasicMaterial({color:0xd3b36c}));npcMarker.rotation.x=-Math.PI/2;npcMarker.position.y=.045;survivorNPC.add(npcMarker);
+const survivorLines=['你醒了？还好你没被那些东西咬到。这里原本是临时落脚点，昨晚大家都往北边撤了。','我叫林。无线电里一直有人重复求救，但信号断断续续。营地里留下的补给也不多了。','检查站那边有撤离标记，后来桥塌了。有人说桥下还有动静……如果你要去，千万别等天黑。'];
+let survivorLineIndex=0;
+function nearSurvivor(){return Math.hypot(player.position.x-survivorNPC.position.x,player.position.z-survivorNPC.position.z)<3.25}
+function openSurvivorDialogue(){survivorLineIndex=0;document.querySelector('#storyLine').textContent=survivorLines[0];document.querySelector('#storyDialog').classList.add('open');document.querySelector('#storyNext').textContent='继续'}
+document.querySelector('#storyNext').addEventListener('click',()=>{survivorLineIndex++;if(survivorLineIndex<survivorLines.length){document.querySelector('#storyLine').textContent=survivorLines[survivorLineIndex];if(survivorLineIndex===survivorLines.length-1)document.querySelector('#storyNext').textContent='结束对话'}else{document.querySelector('#storyDialog').classList.remove('open');markMainQuest('survivorTalk');try{localStorage.setItem('lifeafterClassic_survivor_intro_v1','read')}catch(e){}playGameSfx('pickup');hint.textContent='林：如果找到新的信号，记得回来告诉我。'}});
 document.querySelector('#questButton').addEventListener('click',()=>document.querySelector('#questPanel').classList.toggle('open'));
 document.querySelector('#questClose').addEventListener('click',()=>document.querySelector('#questPanel').classList.remove('open'));
 renderMainQuest();
 action.addEventListener('click',()=>{
+ if(nearSurvivor()&&!document.querySelector('#storyDialog').classList.contains('open')){openSurvivorDialogue();return}
  if(readRadioNote())return;
  if(searchCheckpoint())return;
  if(searchBridgePack())return;
