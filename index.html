@@ -226,8 +226,19 @@ for(const z0 of [-.27,.27]){const slat=new THREE.Mesh(new THREE.BoxGeometry(1,.0
 const crateLid=new THREE.Mesh(new THREE.BoxGeometry(1,.12,.78),new THREE.MeshStandardMaterial({color:0x927044,roughness:1}));crateLid.position.y=.72;crateGroup.add(crateLid);
 let supplyOpened=false;try{supplyOpened=localStorage.getItem('lifeafterClassic_supply_v1')==='opened'}catch(e){}
 const crateMarker=new THREE.Mesh(new THREE.TorusGeometry(.62,.045,6,24),new THREE.MeshBasicMaterial({color:0xd4b45e}));crateMarker.rotation.x=-Math.PI/2;crateMarker.position.set(1,.035,-1);explorationGroup.add(crateMarker);crateMarker.visible=!supplyOpened;
+// V0.7.1: abandoned emergency radio and survivor field note
+const radioGroup=new THREE.Group();radioGroup.position.set(7,0,-40);scene.add(radioGroup);
+const radioMetal=new THREE.MeshStandardMaterial({color:0x555b55,metalness:.55,roughness:.72});
+const radioRust=new THREE.MeshStandardMaterial({color:0x704936,roughness:1});
+const radioBox=new THREE.Mesh(new THREE.BoxGeometry(.72,.5,.42),radioRust);radioBox.position.y=.72;radioGroup.add(radioBox);
+const radioBase=new THREE.Mesh(new THREE.BoxGeometry(.9,.12,.62),radioMetal);radioBase.position.y=.42;radioGroup.add(radioBase);
+const radioMast=new THREE.Mesh(new THREE.CylinderGeometry(.035,.055,1.55,7),radioMetal);radioMast.position.set(.22,1.72,-.08);radioGroup.add(radioMast);
+const radioAntenna=new THREE.Mesh(new THREE.SphereGeometry(.11,8,7),new THREE.MeshStandardMaterial({color:0xb88b4b,emissive:0x4b2d12,emissiveIntensity:.45}));radioAntenna.position.set(.22,2.52,-.08);radioGroup.add(radioAntenna);
+const radioMarker=new THREE.Mesh(new THREE.TorusGeometry(.72,.045,6,24),new THREE.MeshBasicMaterial({color:0x83a9a0}));radioMarker.rotation.x=-Math.PI/2;radioMarker.position.set(0,.04,0);radioGroup.add(radioMarker);
+let radioNoteRead=false;try{radioNoteRead=localStorage.getItem('lifeafterClassic_radio_note_v1')==='read'}catch(e){}radioMarker.visible=!radioNoteRead;
+function readRadioNote(){if(radioNoteRead)return false;if(Math.hypot(player.position.x-7,player.position.z+40)>3.2)return false;radioNoteRead=true;radioMarker.visible=false;try{localStorage.setItem('lifeafterClassic_radio_note_v1','read')}catch(e){}playGameSfx('pickup');hint.textContent='录音残片：撤离前，北边公路连续传来三次求救信号。我们留下了最后一箱药品……';return true}
 function searchSupplyCrate(){if(supplyOpened)return false;if(Math.hypot(player.position.x-1,player.position.z+25)>3.2)return false;supplyOpened=true;crateLid.rotation.x=-1.05;crateLid.position.set(0,.78,-.27);crateMarker.visible=false;wood+=4;stone+=2;food+=1;water+=1;refreshInventory();document.querySelector('#foodCount').textContent=food;document.querySelector('#waterCount').textContent=water;try{localStorage.setItem('lifeafterClassic_supply_v1','opened')}catch(e){}saveGame();playGameSfx('pickup');hint.textContent='搜到废弃补给箱：木头×4、石头×2、食物×1、水×1';return true}
-function updateExplorationHint(){if(supplyOpened)return;const d=Math.hypot(player.position.x-1,player.position.z+25);if(d<5)hint.textContent=d<3.2?'发现补给箱 · 点击交互搜索':'前方有一处废弃营地'}
+function updateExplorationHint(){const rd=Math.hypot(player.position.x-7,player.position.z+40);if(!radioNoteRead&&rd<5){hint.textContent=rd<3.2?'发现废弃求救电台 · 点击交互读取记录':'前方有微弱的无线电信号';return}if(!supplyOpened){const d=Math.hypot(player.position.x-1,player.position.z+25);if(d<5){hint.textContent=d<3.2?'发现补给箱 · 点击交互搜索':'前方有一处废弃营地';return}}}
 document.querySelector('#makeFire').addEventListener('click',buildCampfire);
 document.querySelector('#makeBench').addEventListener('click',buildWorkbench);
 document.querySelector('#makeBarricade').addEventListener('click',buildBarricade);
@@ -239,6 +250,7 @@ document.querySelector('#bagClose').addEventListener('click',closeBag);
 bagPanel.addEventListener('click',e=>{if(e.target===bagPanel)closeBag()});
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeBag();closeBuild();closeCraft()}});
 action.addEventListener('click',()=>{
+ if(readRadioNote())return;
  if(searchSupplyCrate())return;
  if(lootDrop&&Math.hypot(lootDrop.position.x-player.position.x,lootDrop.position.z-player.position.z)<3.2){scene.remove(lootDrop);lootDrop=null;infectedLoot+=1;refreshInventory();playGameSfx('pickup');hint.textContent='拾取感染者物资 ×1';return}
  const t=nearest(trees),r=nearest(rocks);
