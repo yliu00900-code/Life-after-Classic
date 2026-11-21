@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#111812">
-<title>LifeAfter Classic · V0.1</title>
+<title>LifeAfter Classic · V0.2</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101812;color:#e8eee5;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;touch-action:none}
 #game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
@@ -19,6 +19,7 @@
 #look{position:absolute;right:0;bottom:0;width:54%;height:66%;pointer-events:auto;touch-action:none}
 #action{position:absolute;right:24px;bottom:calc(27px + env(safe-area-inset-bottom));width:66px;height:66px;border:1px solid #d8e1c877;border-radius:50%;background:#253326bb;color:#f2f2df;font-size:12px;pointer-events:auto}
 #action:active{background:#65724d}
+#inventory{position:fixed;top:116px;left:14px;padding:8px 10px;border:1px solid #c5d0b044;border-radius:4px;background:#111a13b8;font-size:12px;line-height:1.7;color:#e0e7d6;text-shadow:0 1px 4px #000;pointer-events:none}
 #foot{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:10px;color:#d4ddc888;white-space:nowrap;pointer-events:none}
 #loading{position:fixed;inset:0;display:grid;place-items:center;background:#111812;z-index:5;color:#dfe7d7;font-size:13px;letter-spacing:2px}
 @media(min-width:800px){#joy{width:140px;height:140px}#stick{left:43px;top:43px}#look{width:58%}}
@@ -27,10 +28,10 @@
 </head>
 <body>
 <div id="game"></div><div id="vignette"></div>
-<div id="top"><div class="brand">SURVIVAL PROJECT<b>LIFEAFTER CLASSIC</b></div><div id="status">V0.1 · FOREST TEST<br>DAY 01　08:40</div></div>
-<div id="hint">秋日森林 · 安全区外围</div>
+<div id="top"><div class="brand">SURVIVAL PROJECT<b>LIFEAFTER CLASSIC</b></div><div id="status">V0.2 · GATHERING TEST<br>DAY 01　08:40</div></div>
+<div id="hint">秋日森林 · 安全区外围</div><div id="inventory">背包资源<br>木头：<b id="wood">0</b>　石头：<b id="stone">0</b></div>
 <div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button></div>
-<div id="foot">左侧摇杆移动 · 右侧区域拖动视角</div>
+<div id="foot">靠近资源后点击交互采集</div>
 <div id="loading">正在生成森林环境…</div>
 <script type="module">
 import * as THREE from 'three';
@@ -54,13 +55,13 @@ const trail=new THREE.Mesh(new THREE.PlaneGeometry(5,95),new THREE.MeshStandardM
 const trunkMat=new THREE.MeshStandardMaterial({color:0x514235,roughness:1});
 const leafMats=[0x3f5140,0x4b5b43,0x59634a,0x394b3d].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1}));
 const trees=[];
-function tree(x,z,s=1){const group=new THREE.Group();group.position.set(x,0,z);group.scale.setScalar(s);
+function tree(x,z,s=1){const group=new THREE.Group();group.position.set(x,0,z);group.scale.setScalar(s);group.userData.hits=0;
 const h=THREE.MathUtils.randFloat(4.5,7.8);const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.16,.32,h,7),trunkMat);trunk.position.y=h/2;trunk.castShadow=true;group.add(trunk);
 for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.ConeGeometry(THREE.MathUtils.randFloat(1.5,2.3),THREE.MathUtils.randFloat(3,4.2),7),leafMats[Math.floor(Math.random()*leafMats.length)]);crown.position.y=h*.63+j*.82;crown.rotation.y=Math.random()*3;crown.castShadow=true;group.add(crown)}
 scene.add(group);trees.push(group)}
 for(let i=0;i<115;i++){let x,z;do{x=THREE.MathUtils.randFloatSpread(92);z=THREE.MathUtils.randFloatSpread(92)}while(Math.abs(x)<5&&z>-30&&z<22);tree(x,z,THREE.MathUtils.randFloat(.75,1.35))}
-const rockMat=new THREE.MeshStandardMaterial({color:0x66675e,roughness:1});
-for(let i=0;i<34;i++){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(THREE.MathUtils.randFloat(.35,1.25),0),rockMat);r.position.set(THREE.MathUtils.randFloatSpread(75),.3,THREE.MathUtils.randFloatSpread(75));r.scale.y=THREE.MathUtils.randFloat(.5,1);r.rotation.set(Math.random(),Math.random(),Math.random());r.castShadow=true;r.receiveShadow=true;scene.add(r)}
+const rockMat=new THREE.MeshStandardMaterial({color:0x66675e,roughness:1});const rocks=[];
+for(let i=0;i<34;i++){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(THREE.MathUtils.randFloat(.35,1.25),0),rockMat);r.position.set(THREE.MathUtils.randFloatSpread(75),.3,THREE.MathUtils.randFloatSpread(75));r.scale.y=THREE.MathUtils.randFloat(.5,1);r.rotation.set(Math.random(),Math.random(),Math.random());r.castShadow=true;r.receiveShadow=true;r.userData.hits=0;scene.add(r);rocks.push(r)}
 // Player: muted field jacket, backpack and head
 const player=new THREE.Group();scene.add(player);
 const jacket=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.85,4,8),new THREE.MeshStandardMaterial({color:0x59634c,roughness:.95}));jacket.position.y=1.15;jacket.castShadow=true;player.add(jacket);
@@ -83,7 +84,17 @@ look.addEventListener('pointerdown',e=>{lookId=e.pointerId;lastX=e.clientX;lastY
 look.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;cameraYaw-=(e.clientX-lastX)*.006;cameraPitch=THREE.MathUtils.clamp(cameraPitch+(e.clientY-lastY)*.004,-.05,.75);lastX=e.clientX;lastY=e.clientY});
 function endLook(){lookId=null}look.addEventListener('pointerup',endLook);look.addEventListener('pointercancel',endLook);
 const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-document.querySelector('#action').addEventListener('click',()=>{const h=document.querySelector('#hint');h.textContent='附近暂时没有可交互目标';setTimeout(()=>h.textContent='秋日森林 · 安全区外围',1800)});
+let wood=0,stone=0;
+const hint=document.querySelector('#hint'),action=document.querySelector('#action');
+function nearest(list){let found=null,dist=3.2;for(const obj of list){const d=Math.hypot(obj.position.x-player.position.x,obj.position.z-player.position.z);if(d<dist){dist=d;found=obj}}return found}
+function refreshInventory(){document.querySelector('#wood').textContent=wood;document.querySelector('#stone').textContent=stone}
+action.addEventListener('click',()=>{
+ const t=nearest(trees),r=nearest(rocks);
+ if(t){t.userData.hits++;if(t.userData.hits>=3){scene.remove(t);trees.splice(trees.indexOf(t),1);wood+=3;refreshInventory();hint.textContent='获得木头 ×3'}else{hint.textContent='正在砍伐树木…（'+t.userData.hits+'/3）'}}
+ else if(r){r.userData.hits++;if(r.userData.hits>=2){scene.remove(r);rocks.splice(rocks.indexOf(r),1);stone+=2;refreshInventory();hint.textContent='获得石头 ×2'}else{hint.textContent='正在采集石块…（1/2）'}}
+ else{hint.textContent='靠近树木或石块后才能采集'}
+ setTimeout(()=>{if(hint.textContent!=='秋日森林 · 安全区外围')hint.textContent='秋日森林 · 安全区外围'},1700)
+});
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
 let ix=moveX+(keys.d?1:0)-(keys.a?1:0),iy=moveY+(keys.s?1:0)-(keys.w?1:0);const len=Math.hypot(ix,iy);if(len>1){ix/=len;iy/=len}
 const moving=Math.hypot(ix,iy)>.08;
