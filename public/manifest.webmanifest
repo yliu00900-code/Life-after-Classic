@@ -1,0 +1,9 @@
+{
+  "name": "LifeAfter Classic",
+  "short_name": "LifeAfter",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#111812",
+  "theme_color": "#111812",
+  "description": "An original offline survival game prototype inspired by classic post-apocalyptic mobile survival games."
+}
