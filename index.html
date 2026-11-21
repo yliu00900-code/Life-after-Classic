@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#111812">
-<title>LifeAfter Classic · V0.2</title>
+<title>LifeAfter Classic · V0.3</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101812;color:#e8eee5;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;touch-action:none}
 #game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
@@ -41,10 +41,11 @@
 </head>
 <body>
 <div id="game"></div><div id="vignette"></div>
-<div id="top"><div class="brand">SURVIVAL PROJECT<b>LIFEAFTER CLASSIC</b></div><div id="status">V0.2 · GATHERING TEST<br>DAY 01　08:40</div></div>
+<div id="top"><div class="brand">SURVIVAL PROJECT<b>LIFEAFTER CLASSIC</b></div><div id="status">V0.3 · COMBAT TEST<br>DAY 01　08:40</div></div>
 <div id="hint">秋日森林 · 安全区外围</div><div id="threat">幸存者状态　生命值 <b id="hpText">100</b>/100<div id="hpTrack"><div id="hpFill"></div></div><div id="enemyText">附近：暂未发现感染者</div><div id="enemyHealth" style="display:none;margin-top:6px">感染者 <b id="enemyHPText">100</b>/100<div id="enemyHPTrack" style="height:5px;margin-top:4px;background:#4a302b;border-radius:5px;overflow:hidden"><div id="enemyHPFill" style="height:100%;width:100%;background:#a9a35c;transition:width .15s"></div></div></div></div><div id="inventory">背包资源<br>木头：<b id="wood">0</b>　石头：<b id="stone">0</b></div>
 <button id="bagButton" aria-label="打开背包">背包</button><div id="bagPanel" aria-hidden="true"><div class="bag-card"><div class="bag-head"><span>生存背包</span><button id="bagClose">关闭</button></div><div class="bag-grid"><div class="bag-slot"><div class="bag-icon">🪵</div><span class="bag-name">木头</span><span class="bag-count" id="bagWood">0</span></div><div class="bag-slot"><div class="bag-icon">🪨</div><span class="bag-name">石头</span><span class="bag-count" id="bagStone">0</span></div></div><div class="bag-note">资源会在采集成功后自动存入背包</div></div></div>
-<div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button><button id="attack" style="position:absolute;right:24px;bottom:calc(108px + env(safe-area-inset-bottom));width:66px;height:66px;border:1px solid #d8a08c99;border-radius:50%;background:#492a25dd;color:#ffe8dc;font-size:13px;pointer-events:auto">攻击</button></div>
+<div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button></div>
+<button id="attack" aria-label="攻击感染者">攻击</button>
 <div id="foot">靠近资源后点击交互采集</div>
 <div id="loading">正在生成森林环境…</div>
 <script type="module">
