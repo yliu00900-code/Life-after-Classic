@@ -60,8 +60,12 @@ const h=THREE.MathUtils.randFloat(4.5,7.8);const trunk=new THREE.Mesh(new THREE.
 for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.ConeGeometry(THREE.MathUtils.randFloat(1.5,2.3),THREE.MathUtils.randFloat(3,4.2),7),leafMats[Math.floor(Math.random()*leafMats.length)]);crown.position.y=h*.63+j*.82;crown.rotation.y=Math.random()*3;crown.castShadow=true;group.add(crown)}
 scene.add(group);trees.push(group)}
 for(let i=0;i<115;i++){let x,z;do{x=THREE.MathUtils.randFloatSpread(92);z=THREE.MathUtils.randFloatSpread(92)}while(Math.abs(x)<5&&z>-30&&z<22);tree(x,z,THREE.MathUtils.randFloat(.75,1.35))}
+// Guaranteed starter tree beside spawn for the first gathering tutorial
+tree(2.2,7.5,1.05);
 const rockMat=new THREE.MeshStandardMaterial({color:0x66675e,roughness:1});const rocks=[];
 for(let i=0;i<34;i++){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(THREE.MathUtils.randFloat(.35,1.25),0),rockMat);r.position.set(THREE.MathUtils.randFloatSpread(75),.3,THREE.MathUtils.randFloatSpread(75));r.scale.y=THREE.MathUtils.randFloat(.5,1);r.rotation.set(Math.random(),Math.random(),Math.random());r.castShadow=true;r.receiveShadow=true;r.userData.hits=0;scene.add(r);rocks.push(r)}
+// Guaranteed starter stone beside spawn for the first gathering tutorial
+const starterRock=new THREE.Mesh(new THREE.DodecahedronGeometry(.85,0),rockMat);starterRock.position.set(-2.4,.45,8.5);starterRock.scale.y=.7;starterRock.userData.hits=0;starterRock.castShadow=true;scene.add(starterRock);rocks.push(starterRock);
 // Player: muted field jacket, backpack and head
 const player=new THREE.Group();scene.add(player);
 const jacket=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.85,4,8),new THREE.MeshStandardMaterial({color:0x59634c,roughness:.95}));jacket.position.y=1.15;jacket.castShadow=true;player.add(jacket);
