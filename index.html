@@ -158,9 +158,32 @@ document.querySelector('#buildClose').addEventListener('click',closeBuild);
 buildPanel.addEventListener('click',e=>{if(e.target===buildPanel)closeBuild()});
 function buildPosition(){const forward=new THREE.Vector3(Math.sin(player.rotation.y),0,Math.cos(player.rotation.y));return player.position.clone().add(forward.multiplyScalar(2.1))}
 function payMaterials(w,s){if(wood<w||stone<s){hint.textContent='材料不足！需要木头 '+w+'、石头 '+s;return false}wood-=w;stone-=s;refreshInventory();refreshBuildMaterials();return true}
-function buildCampfire(){if(!payMaterials(6,3))return;const g=new THREE.Group(),p=buildPosition();g.position.set(p.x,0,p.z);const stoneMat=new THREE.MeshStandardMaterial({color:0x77766b,roughness:1}),logMat=new THREE.MeshStandardMaterial({color:0x60452e,roughness:1});for(let i=0;i<7;i++){const a=i/7*Math.PI*2,rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.22,0),stoneMat);rock.position.set(Math.cos(a)*.48,.15,Math.sin(a)*.48);rock.scale.set(1,.7,1);g.add(rock)}for(let i=0;i<2;i++){const log=new THREE.Mesh(new THREE.CylinderGeometry(.09,.11,.9,7),logMat);log.rotation.z=Math.PI/2;log.rotation.y=i*.8;log.position.y=.19;g.add(log)}const flame=new THREE.Mesh(new THREE.ConeGeometry(.22,.72,7),new THREE.MeshBasicMaterial({color:0xff9b3d,transparent:true,opacity:.85}));flame.position.y=.62;g.add(flame);const light=new THREE.PointLight(0xff8b3a,1.4,7);light.position.y=1;g.add(light);scene.add(g);hint.textContent='简易篝火建造完成！';}
-function buildWorkbench(){if(!payMaterials(8,5))return;const g=new THREE.Group(),p=buildPosition();g.position.set(p.x,0,p.z);const woodMat=new THREE.MeshStandardMaterial({color:0x76563a,roughness:1}),darkMat=new THREE.MeshStandardMaterial({color:0x40372b,roughness:1});const top=new THREE.Mesh(new THREE.BoxGeometry(1.35,.16,.78),woodMat);top.position.y=.92;g.add(top);for(const x of [-.52,.52])for(const z of [-.25,.25]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.12,.88,.12),darkMat);leg.position.set(x,.44,z);g.add(leg)}const tool=new THREE.Mesh(new THREE.BoxGeometry(.42,.06,.12),new THREE.MeshStandardMaterial({color:0x9b9b83,metalness:.35,roughness:.7}));tool.position.set(.12,1.04,0);g.add(tool);scene.add(g);hint.textContent='简易工作台建造完成！制作功能将在后续阶段开放。'}
-function buildBarricade(){if(!payMaterials(5,2))return;const g=new THREE.Group(),p=buildPosition();g.position.set(p.x,0,p.z);const m=new THREE.MeshStandardMaterial({color:0x72583a,roughness:1});for(let i=0;i<3;i++){const plank=new THREE.Mesh(new THREE.BoxGeometry(1.55,.18,.16),m);plank.position.set(0,.48+i*.34,0);g.add(plank)}for(const x of [-.62,.62]){const post=new THREE.Mesh(new THREE.BoxGeometry(.16,1.35,.2),m);post.position.set(x,.65,0);g.add(post)}scene.add(g);hint.textContent='木质路障建造完成！'}
+const BUILD_SAVE_KEY='lifeafterClassic_buildings_v1';
+let savedBuildings=[];
+function saveBuildings(){try{localStorage.setItem(BUILD_SAVE_KEY,JSON.stringify(savedBuildings))}catch(e){hint.textContent='建筑保存失败：浏览器存储不可用'}}
+function createBuilding(type,x,z,rotation=0){
+ const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rotation;
+ if(type==='fire'){
+  const stoneMat=new THREE.MeshStandardMaterial({color:0x77766b,roughness:1}),logMat=new THREE.MeshStandardMaterial({color:0x60452e,roughness:1});
+  for(let i=0;i<7;i++){const a=i/7*Math.PI*2,rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.22,0),stoneMat);rock.position.set(Math.cos(a)*.48,.15,Math.sin(a)*.48);rock.scale.set(1,.7,1);g.add(rock)}
+  for(let i=0;i<2;i++){const log=new THREE.Mesh(new THREE.CylinderGeometry(.09,.11,.9,7),logMat);log.rotation.z=Math.PI/2;log.rotation.y=i*.8;log.position.y=.19;g.add(log)}
+  const flame=new THREE.Mesh(new THREE.ConeGeometry(.22,.72,7),new THREE.MeshBasicMaterial({color:0xff9b3d,transparent:true,opacity:.85}));flame.position.y=.62;g.add(flame);const light=new THREE.PointLight(0xff8b3a,1.4,7);light.position.y=1;g.add(light);
+ }else if(type==='bench'){
+  const woodMat=new THREE.MeshStandardMaterial({color:0x76563a,roughness:1}),darkMat=new THREE.MeshStandardMaterial({color:0x40372b,roughness:1});const top=new THREE.Mesh(new THREE.BoxGeometry(1.35,.16,.78),woodMat);top.position.y=.92;g.add(top);
+  for(const x0 of [-.52,.52])for(const z0 of [-.25,.25]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.12,.88,.12),darkMat);leg.position.set(x0,.44,z0);g.add(leg)}
+  const tool=new THREE.Mesh(new THREE.BoxGeometry(.42,.06,.12),new THREE.MeshStandardMaterial({color:0x9b9b83,metalness:.35,roughness:.7}));tool.position.set(.12,1.04,0);g.add(tool);
+ }else if(type==='barricade'){
+  const m=new THREE.MeshStandardMaterial({color:0x72583a,roughness:1});for(let i=0;i<3;i++){const plank=new THREE.Mesh(new THREE.BoxGeometry(1.55,.18,.16),m);plank.position.set(0,.48+i*.34,0);g.add(plank)}
+  for(const x0 of [-.62,.62]){const post=new THREE.Mesh(new THREE.BoxGeometry(.16,1.35,.2),m);post.position.set(x0,.65,0);g.add(post)}
+ }
+ scene.add(g);return g;
+}
+function placeBuilding(type){const p=buildPosition();const item={type,x:p.x,z:p.z,rotation:player.rotation.y};savedBuildings.push(item);createBuilding(item.type,item.x,item.z,item.rotation);saveBuildings()}
+function loadBuildings(){try{const raw=localStorage.getItem(BUILD_SAVE_KEY);const data=raw?JSON.parse(raw):[];if(!Array.isArray(data))return;savedBuildings=data.filter(v=>v&&['fire','bench','barricade'].includes(v.type)&&Number.isFinite(v.x)&&Number.isFinite(v.z)&&Number.isFinite(v.rotation));for(const b of savedBuildings)createBuilding(b.type,b.x,b.z,b.rotation)}catch(e){savedBuildings=[];console.warn('建筑存档读取失败',e)}}
+function buildCampfire(){if(!payMaterials(6,3))return;placeBuilding('fire');hint.textContent='简易篝火建造完成！位置已保存。'}
+function buildWorkbench(){if(!payMaterials(8,5))return;placeBuilding('bench');hint.textContent='简易工作台建造完成！位置已保存，制作功能后续开放。'}
+function buildBarricade(){if(!payMaterials(5,2))return;placeBuilding('barricade');hint.textContent='木质路障建造完成！位置已保存。'}
+loadBuildings();
 document.querySelector('#makeFire').addEventListener('click',buildCampfire);
 document.querySelector('#makeBench').addEventListener('click',buildWorkbench);
 document.querySelector('#makeBarricade').addEventListener('click',buildBarricade);
