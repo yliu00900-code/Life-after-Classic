@@ -21,7 +21,7 @@
 #action:active{background:#65724d}
 #inventory{position:fixed;top:116px;left:14px;padding:8px 10px;border:1px solid #c5d0b044;border-radius:4px;background:#111a13b8;font-size:12px;line-height:1.7;color:#e0e7d6;text-shadow:0 1px 4px #000;pointer-events:none}\n#bagButton{position:fixed;top:76px;right:14px;padding:9px 15px;border:1px solid #d8e1c877;border-radius:4px;background:#253326dd;color:#f2f2df;font-size:12px;pointer-events:auto}\n#bagPanel{position:fixed;inset:0;display:none;place-items:center;background:#050905b9;z-index:4;padding:22px}\n#bagPanel.open{display:grid}\n.bag-card{width:min(340px,100%);padding:18px;border:1px solid #aeb99a88;border-radius:6px;background:linear-gradient(145deg,#263126,#111812);box-shadow:0 16px 50px #000b}\n.bag-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:17px;letter-spacing:2px}\n#bagClose{border:1px solid #aeb99a66;background:#303b2e;color:#e8eee5;border-radius:4px;padding:6px 11px}\n.bag-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}\n.bag-slot{min-height:104px;padding:13px;border:1px solid #aeb99a44;border-radius:4px;background:#0b120dbb}\n.bag-icon{font-size:28px;margin-bottom:8px}.bag-name{font-size:12px;color:#cbd5c1}.bag-count{float:right;font-size:18px;color:#f3f0d9;font-weight:700}\n.bag-note{margin-top:14px;font-size:11px;color:#aeb99a}
 #foot{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:10px;color:#d4ddc888;white-space:nowrap;pointer-events:none}
-#loading{position:fixed;inset:0;display:grid;place-items:center;background:#111812;z-index:5;color:#dfe7d7;font-size:13px;letter-spacing:2px}
+#threat{position:fixed;top:164px;left:14px;width:142px;padding:7px 9px;border:1px solid #b8c3a044;border-radius:4px;background:#111a13b8;font-size:11px;color:#e5dfd0;text-shadow:0 1px 4px #000;pointer-events:none}#hpTrack{height:5px;margin-top:5px;background:#4a302b;border-radius:5px;overflow:hidden}#hpFill{height:100%;width:100%;background:#b65b4d;transition:width .2s}\n#loading{position:fixed;inset:0;display:grid;place-items:center;background:#111812;z-index:5;color:#dfe7d7;font-size:13px;letter-spacing:2px}
 @media(min-width:800px){#joy{width:140px;height:140px}#stick{left:43px;top:43px}#look{width:58%}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
@@ -29,7 +29,7 @@
 <body>
 <div id="game"></div><div id="vignette"></div>
 <div id="top"><div class="brand">SURVIVAL PROJECT<b>LIFEAFTER CLASSIC</b></div><div id="status">V0.2 · GATHERING TEST<br>DAY 01　08:40</div></div>
-<div id="hint">秋日森林 · 安全区外围</div><div id="inventory">背包资源<br>木头：<b id="wood">0</b>　石头：<b id="stone">0</b></div>
+<div id="hint">秋日森林 · 安全区外围</div><div id="threat">幸存者状态　生命值 <b id="hpText">100</b>/100<div id="hpTrack"><div id="hpFill"></div></div><div id="enemyText">附近：暂未发现感染者</div></div><div id="inventory">背包资源<br>木头：<b id="wood">0</b>　石头：<b id="stone">0</b></div>
 <button id="bagButton" aria-label="打开背包">背包</button><div id="bagPanel" aria-hidden="true"><div class="bag-card"><div class="bag-head"><span>生存背包</span><button id="bagClose">关闭</button></div><div class="bag-grid"><div class="bag-slot"><div class="bag-icon">🪵</div><span class="bag-name">木头</span><span class="bag-count" id="bagWood">0</span></div><div class="bag-slot"><div class="bag-icon">🪨</div><span class="bag-name">石头</span><span class="bag-count" id="bagStone">0</span></div></div><div class="bag-note">资源会在采集成功后自动存入背包</div></div></div>\n<div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button></div>
 <div id="foot">靠近资源后点击交互采集</div>
 <div id="loading">正在生成森林环境…</div>
@@ -73,7 +73,30 @@ const head=new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),new THREE.MeshStan
 const hair=new THREE.Mesh(new THREE.SphereGeometry(.275,12,8,0,Math.PI*2,0,Math.PI*.52),new THREE.MeshStandardMaterial({color:0x292a24}));hair.position.y=2.03;player.add(hair);
 const pack=new THREE.Mesh(new THREE.BoxGeometry(.52,.68,.28),new THREE.MeshStandardMaterial({color:0x393b30,roughness:1}));pack.position.set(0,1.25,.48);pack.castShadow=true;player.add(pack);
 for(const x of [-.22,.22]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.14,.16,.72,7),new THREE.MeshStandardMaterial({color:0x343b32}));leg.position.set(x,.38,0);player.add(leg)}
+
 player.position.set(0,0,8);
+// First infected: slow patrol, detects the player, then pursues and attacks at close range
+const infected=new THREE.Group();scene.add(infected);infected.position.set(3.5,0,-10);
+const zombieSkin=new THREE.MeshStandardMaterial({color:0x78806a,roughness:1});
+const tornClothes=new THREE.MeshStandardMaterial({color:0x51483d,roughness:1});
+const zombieBody=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.8,4,7),tornClothes);zombieBody.position.y=1.05;zombieBody.castShadow=true;infected.add(zombieBody);
+const zombieHead=new THREE.Mesh(new THREE.SphereGeometry(.29,10,9),zombieSkin);zombieHead.position.set(0,1.85,-.02);zombieHead.castShadow=true;infected.add(zombieHead);
+const eyeMat=new THREE.MeshBasicMaterial({color:0xd5a36a});
+for(const ex of [-.105,.105]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,6,6),eyeMat);eye.position.set(ex,1.89,-.27);infected.add(eye)}
+for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.55,3,6),zombieSkin);arm.position.set(side*.48,1.12,-.12);arm.rotation.z=side*.22;infected.add(arm);const leg=new THREE.Mesh(new THREE.CylinderGeometry(.13,.16,.68,6),tornClothes);leg.position.set(side*.19,.35,0);infected.add(leg)}
+const infectedShadow=new THREE.Mesh(new THREE.CircleGeometry(.58,16),new THREE.MeshBasicMaterial({color:0x080b08,transparent:true,opacity:.4}));infectedShadow.rotation.x=-Math.PI/2;infectedShadow.position.y=.02;infected.add(infectedShadow);
+const infectedHome=new THREE.Vector3(3.5,0,-10);let infectedMode='wander',wanderClock=0,attackClock=0,playerHP=100;
+const hpText=document.querySelector('#hpText'),hpFill=document.querySelector('#hpFill'),enemyText=document.querySelector('#enemyText');
+function updateInfected(dt){
+ const dx=player.position.x-infected.position.x,dz=player.position.z-infected.position.z,dist=Math.hypot(dx,dz);
+ if(dist<10)infectedMode='chase';else if(dist>15)infectedMode='wander';
+ if(infectedMode==='chase'&&dist>1.35){infected.position.x+=dx/dist*dt*1.05;infected.position.z+=dz/dist*dt*1.05;infected.rotation.y=Math.atan2(dx,dz)}
+ else if(infectedMode==='wander'){wanderClock+=dt;const a=Math.sin(wanderClock*.55)*.45;infected.position.x=infectedHome.x+Math.sin(wanderClock*.35)*1.8;infected.position.z=infectedHome.z+Math.cos(wanderClock*.35)*1.8;infected.rotation.y=a}
+ if(infectedMode==='chase'&&dist<=1.45){attackClock-=dt;if(attackClock<=0){playerHP=Math.max(0,playerHP-8);attackClock=1.5;hpText.textContent=playerHP;hpFill.style.width=playerHP+'%';hint.textContent=playerHP>0?'感染者攻击了你！生命值 -8':'你已倒下，请重新开始';}}
+ else attackClock=0;
+ enemyText.textContent=dist<10?'附近：感染者正在追击！':'附近：感染者游荡中';
+}
+
 const shadow=new THREE.Mesh(new THREE.CircleGeometry(.65,20),new THREE.MeshBasicMaterial({color:0x11150f,transparent:true,opacity:.35}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.015;player.add(shadow);
 let yaw=0,moveX=0,moveY=0,cameraYaw=0,cameraPitch=.18;
 const clock=new THREE.Clock();
@@ -103,7 +126,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
 let ix=moveX+(keys.d?1:0)-(keys.a?1:0),iy=moveY+(keys.s?1:0)-(keys.w?1:0);const len=Math.hypot(ix,iy);if(len>1){ix/=len;iy/=len}
 const moving=Math.hypot(ix,iy)>.08;
 if(moving){const forward=new THREE.Vector3(Math.sin(cameraYaw),0,Math.cos(cameraYaw));const right=new THREE.Vector3(forward.z,0,-forward.x);const dir=forward.multiplyScalar(-iy).add(right.multiplyScalar(ix)).normalize();player.position.addScaledVector(dir,dt*3.2);yaw=Math.atan2(dir.x,dir.z);player.rotation.y=THREE.MathUtils.lerp(player.rotation.y,yaw,Math.min(1,dt*10))}
-const target=new THREE.Vector3(player.position.x,1.25,player.position.z);
+updateInfected(dt);\nconst target=new THREE.Vector3(player.position.x,1.25,player.position.z);
 const distance=6.3, horiz=Math.cos(cameraPitch)*distance, vert=Math.sin(cameraPitch)*distance+1.4;
 const desired=new THREE.Vector3(target.x+Math.sin(cameraYaw)*horiz,target.y+vert,target.z+Math.cos(cameraYaw)*horiz);
 camera.position.lerp(desired,1-Math.pow(.001,dt));camera.lookAt(target);
