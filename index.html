@@ -245,6 +245,27 @@ const checkpointLid=new THREE.Mesh(new THREE.BoxGeometry(1,.12,.82),new THREE.Me
 let checkpointSearched=false;try{checkpointSearched=localStorage.getItem('lifeafterClassic_checkpoint_v1')==='searched'}catch(e){}
 const checkpointMarker=new THREE.Mesh(new THREE.TorusGeometry(.64,.045,6,24),new THREE.MeshBasicMaterial({color:0xd4b45e}));checkpointMarker.rotation.x=-Math.PI/2;checkpointMarker.position.set(1.25,.04,.65);checkpointGroup.add(checkpointMarker);checkpointMarker.visible=!checkpointSearched;
 function searchCheckpoint(){if(checkpointSearched||Math.hypot(player.position.x+9.75,player.position.z+38.35)>3.2)return false;checkpointSearched=true;checkpointLid.rotation.x=-1.05;checkpointLid.position.set(0,.78,-.28);checkpointMarker.visible=false;wood+=5;stone+=3;food+=1;water+=1;refreshInventory();document.querySelector('#foodCount').textContent=food;document.querySelector('#waterCount').textContent=water;try{localStorage.setItem('lifeafterClassic_checkpoint_v1','searched')}catch(e){}saveGame();playGameSfx('pickup');hint.textContent='检查站物资：木头×5、石头×3、食物×1、水×1。墙上的字迹：别走北边公路，桥已经塌了。';return true}
+// V0.7.3: collapsed bridge approach and abandoned survivor pack
+const bridgeGroup=new THREE.Group();bridgeGroup.position.set(-11,0,-57);scene.add(bridgeGroup);
+const bridgeStone=new THREE.MeshStandardMaterial({color:0x66675f,roughness:1});
+const bridgeEdge=new THREE.MeshStandardMaterial({color:0x4a4d48,roughness:1});
+const bridgeMetal=new THREE.MeshStandardMaterial({color:0x554b3d,metalness:.35,roughness:1});
+const bridgeWater=new THREE.MeshStandardMaterial({color:0x263b3d,roughness:.3,metalness:.12});
+const ravine=new THREE.Mesh(new THREE.BoxGeometry(12,.12,5.8),bridgeWater);ravine.position.set(0,-.12,0);bridgeGroup.add(ravine);
+const approach=new THREE.Mesh(new THREE.BoxGeometry(5.4,.28,3.2),bridgeStone);approach.position.set(0,.02,0);bridgeGroup.add(approach);
+const brokenLeft=new THREE.Mesh(new THREE.BoxGeometry(2.1,.3,3.1),bridgeStone);brokenLeft.position.set(-3.1,-.05,-.45);brokenLeft.rotation.y=-.12;bridgeGroup.add(brokenLeft);
+const brokenRight=new THREE.Mesh(new THREE.BoxGeometry(1.65,.3,2.3),bridgeStone);brokenRight.position.set(3.25,-.42,.65);brokenRight.rotation.z=-.16;bridgeGroup.add(brokenRight);
+for(const side of [-1,1]){const rail=new THREE.Mesh(new THREE.BoxGeometry(5.4,.16,.18),bridgeMetal);rail.position.set(side*2.5,.78,-.1);rail.rotation.z=side===-1?-.08:.12;bridgeGroup.add(rail)}
+const snappedRail=new THREE.Mesh(new THREE.BoxGeometry(2.7,.14,.16),bridgeMetal);snappedRail.position.set(3.5,.28,.9);snappedRail.rotation.set(.25,.3,-.48);bridgeGroup.add(snappedRail);
+for(const bx of [-2.35,2.35]){const post=new THREE.Mesh(new THREE.BoxGeometry(.18,.9,.18),bridgeStone);post.position.set(bx,.48,-1.35);bridgeGroup.add(post)}
+const warningBoard=new THREE.Mesh(new THREE.BoxGeometry(1.15,.72,.12),new THREE.MeshStandardMaterial({color:0x8a6842,roughness:1}));warningBoard.position.set(0,1.45,-1.62);bridgeGroup.add(warningBoard);
+const packGroup=new THREE.Group();packGroup.position.set(-1.35,.18,1.15);bridgeGroup.add(packGroup);
+const packBody=new THREE.Mesh(new THREE.BoxGeometry(.72,.82,.42),new THREE.MeshStandardMaterial({color:0x4d5542,roughness:1}));packBody.position.y=.48;packGroup.add(packBody);
+const packTop=new THREE.Mesh(new THREE.BoxGeometry(.76,.2,.46),new THREE.MeshStandardMaterial({color:0x62523a,roughness:1}));packTop.position.set(0,.91,0);packGroup.add(packTop);
+const packStrap=new THREE.Mesh(new THREE.BoxGeometry(.1,.86,.48),bridgeMetal);packStrap.position.x=.2;packGroup.add(packStrap);
+let bridgePackSearched=false;try{bridgePackSearched=localStorage.getItem('lifeafterClassic_bridgepack_v1')==='searched'}catch(e){}
+const bridgePackMarker=new THREE.Mesh(new THREE.TorusGeometry(.58,.045,6,24),new THREE.MeshBasicMaterial({color:0xd4b45e}));bridgePackMarker.rotation.x=-Math.PI/2;bridgePackMarker.position.set(-1.35,.04,1.15);bridgeGroup.add(bridgePackMarker);bridgePackMarker.visible=!bridgePackSearched;
+function searchBridgePack(){if(bridgePackSearched||Math.hypot(player.position.x+12.35,player.position.z+55.85)>3.2)return false;bridgePackSearched=true;bridgePackMarker.visible=false;packTop.rotation.x=-.7;packTop.position.set(0,.88,-.2);wood+=3;stone+=2;food+=1;refreshInventory();document.querySelector('#foodCount').textContent=food;try{localStorage.setItem('lifeafterClassic_bridgepack_v1','searched')}catch(e){}saveGame();playGameSfx('pickup');hint.textContent='找到幸存者背包：木头×3、石头×2、食物×1。纸条写着：桥下有东西在动，别在夜里靠近。';return true}
 // V0.7.1: abandoned emergency radio and survivor field note
 const radioGroup=new THREE.Group();radioGroup.position.set(7,0,-40);scene.add(radioGroup);
 const radioMetal=new THREE.MeshStandardMaterial({color:0x555b55,metalness:.55,roughness:.72});
@@ -257,7 +278,7 @@ const radioMarker=new THREE.Mesh(new THREE.TorusGeometry(.72,.045,6,24),new THRE
 let radioNoteRead=false;try{radioNoteRead=localStorage.getItem('lifeafterClassic_radio_note_v1')==='read'}catch(e){}radioMarker.visible=!radioNoteRead;
 function readRadioNote(){if(radioNoteRead)return false;if(Math.hypot(player.position.x-7,player.position.z+40)>3.2)return false;radioNoteRead=true;radioMarker.visible=false;try{localStorage.setItem('lifeafterClassic_radio_note_v1','read')}catch(e){}playGameSfx('pickup');hint.textContent='录音残片：撤离前，北边公路连续传来三次求救信号。我们留下了最后一箱药品……';return true}
 function searchSupplyCrate(){if(supplyOpened)return false;if(Math.hypot(player.position.x-1,player.position.z+25)>3.2)return false;supplyOpened=true;crateLid.rotation.x=-1.05;crateLid.position.set(0,.78,-.27);crateMarker.visible=false;wood+=4;stone+=2;food+=1;water+=1;refreshInventory();document.querySelector('#foodCount').textContent=food;document.querySelector('#waterCount').textContent=water;try{localStorage.setItem('lifeafterClassic_supply_v1','opened')}catch(e){}saveGame();playGameSfx('pickup');hint.textContent='搜到废弃补给箱：木头×4、石头×2、食物×1、水×1';return true}
-function updateExplorationHint(){const rd=Math.hypot(player.position.x-7,player.position.z+40);if(!radioNoteRead&&rd<5){hint.textContent=rd<3.2?'发现废弃求救电台 · 点击交互读取记录':'前方有微弱的无线电信号';return}if(!checkpointSearched){const cd=Math.hypot(player.position.x+9.75,player.position.z+38.35);if(cd<5){hint.textContent=cd<3.2?'发现废弃公路检查站 · 点击交互搜索物资':'前方有一处废弃公路检查站';return}}if(!supplyOpened){const d=Math.hypot(player.position.x-1,player.position.z+25);if(d<5){hint.textContent=d<3.2?'发现补给箱 · 点击交互搜索':'前方有一处废弃营地';return}}}
+function updateExplorationHint(){const rd=Math.hypot(player.position.x-7,player.position.z+40);if(!radioNoteRead&&rd<5){hint.textContent=rd<3.2?'发现废弃求救电台 · 点击交互读取记录':'前方有微弱的无线电信号';return}if(!checkpointSearched){const cd=Math.hypot(player.position.x+9.75,player.position.z+38.35);if(cd<5){hint.textContent=cd<3.2?'发现废弃公路检查站 · 点击交互搜索物资':'前方有一处废弃公路检查站';return}}if(!bridgePackSearched){const bd=Math.hypot(player.position.x+12.35,player.position.z+55.85);if(bd<5){hint.textContent=bd<3.2?'发现桥边幸存者背包 · 点击交互搜索':'前方是坍塌的公路桥';return}}if(!supplyOpened){const d=Math.hypot(player.position.x-1,player.position.z+25);if(d<5){hint.textContent=d<3.2?'发现补给箱 · 点击交互搜索':'前方有一处废弃营地';return}}}
 document.querySelector('#makeFire').addEventListener('click',buildCampfire);
 document.querySelector('#makeBench').addEventListener('click',buildWorkbench);
 document.querySelector('#makeBarricade').addEventListener('click',buildBarricade);
@@ -271,6 +292,7 @@ addEventListener('keydown',e=>{if(e.key==='Escape'){closeBag();closeBuild();clos
 action.addEventListener('click',()=>{
  if(readRadioNote())return;
  if(searchCheckpoint())return;
+ if(searchBridgePack())return;
  if(searchSupplyCrate())return;
  if(lootDrop&&Math.hypot(lootDrop.position.x-player.position.x,lootDrop.position.z-player.position.z)<3.2){scene.remove(lootDrop);lootDrop=null;infectedLoot+=1;refreshInventory();playGameSfx('pickup');hint.textContent='拾取感染者物资 ×1';return}
  const t=nearest(trees),r=nearest(rocks);
