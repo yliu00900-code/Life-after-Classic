@@ -1,0 +1,7 @@
+{
+  "appId": "com.lifeafterclassic.game",
+  "appName": "LifeAfter Classic",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": { "backgroundColor": "#111812" }
+}
