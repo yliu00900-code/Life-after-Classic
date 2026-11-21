@@ -226,6 +226,25 @@ for(const z0 of [-.27,.27]){const slat=new THREE.Mesh(new THREE.BoxGeometry(1,.0
 const crateLid=new THREE.Mesh(new THREE.BoxGeometry(1,.12,.78),new THREE.MeshStandardMaterial({color:0x927044,roughness:1}));crateLid.position.y=.72;crateGroup.add(crateLid);
 let supplyOpened=false;try{supplyOpened=localStorage.getItem('lifeafterClassic_supply_v1')==='opened'}catch(e){}
 const crateMarker=new THREE.Mesh(new THREE.TorusGeometry(.62,.045,6,24),new THREE.MeshBasicMaterial({color:0xd4b45e}));crateMarker.rotation.x=-Math.PI/2;crateMarker.position.set(1,.035,-1);explorationGroup.add(crateMarker);crateMarker.visible=!supplyOpened;
+// V0.7.2: collapsed roadside checkpoint and survivor clue
+const checkpointGroup=new THREE.Group();checkpointGroup.position.set(-11,0,-39);scene.add(checkpointGroup);
+const checkpointConcrete=new THREE.MeshStandardMaterial({color:0x68665b,roughness:1});
+const checkpointRust=new THREE.MeshStandardMaterial({color:0x654536,metalness:.25,roughness:1});
+const checkpointPaint=new THREE.MeshStandardMaterial({color:0x8a8066,roughness:1});
+const checkBase=new THREE.Mesh(new THREE.BoxGeometry(5.2,.22,3.6),checkpointConcrete);checkBase.position.set(0,.11,0);checkpointGroup.add(checkBase);
+const checkWall=new THREE.Mesh(new THREE.BoxGeometry(4.6,1.35,.22),checkpointConcrete);checkWall.position.set(0,.78,-1.55);checkpointGroup.add(checkWall);
+const checkPostA=new THREE.Mesh(new THREE.BoxGeometry(.22,1.9,.22),checkpointRust);checkPostA.position.set(-2.2,.95,-1.5);checkpointGroup.add(checkPostA);
+const checkPostB=checkPostA.clone();checkPostB.position.x=2.2;checkpointGroup.add(checkPostB);
+const fallenBeam=new THREE.Mesh(new THREE.BoxGeometry(4.8,.18,.2),checkpointRust);fallenBeam.position.set(.15,.42,.1);fallenBeam.rotation.z=-.18;checkpointGroup.add(fallenBeam);
+const wreckBody=new THREE.Mesh(new THREE.BoxGeometry(2.15,.72,1.15),checkpointRust);wreckBody.position.set(-1.1,.52,1.05);wreckBody.rotation.y=-.24;checkpointGroup.add(wreckBody);
+const wreckCab=new THREE.Mesh(new THREE.BoxGeometry(.95,.72,1.02),checkpointPaint);wreckCab.position.set(-1.35,1.16,1.08);wreckCab.rotation.y=-.24;checkpointGroup.add(wreckCab);
+for(const wx of [-1.9,-.25]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.2,10),new THREE.MeshStandardMaterial({color:0x242522,roughness:1}));wheel.rotation.z=Math.PI/2;wheel.position.set(wx,.34,1.55);checkpointGroup.add(wheel)}
+const checkpointCrate=new THREE.Group();checkpointCrate.position.set(1.25,.16,.65);checkpointGroup.add(checkpointCrate);
+const checkpointBox=new THREE.Mesh(new THREE.BoxGeometry(.95,.62,.78),new THREE.MeshStandardMaterial({color:0x795a36,roughness:1}));checkpointBox.position.y=.34;checkpointCrate.add(checkpointBox);
+const checkpointLid=new THREE.Mesh(new THREE.BoxGeometry(1,.12,.82),new THREE.MeshStandardMaterial({color:0x987449,roughness:1}));checkpointLid.position.y=.72;checkpointCrate.add(checkpointLid);
+let checkpointSearched=false;try{checkpointSearched=localStorage.getItem('lifeafterClassic_checkpoint_v1')==='searched'}catch(e){}
+const checkpointMarker=new THREE.Mesh(new THREE.TorusGeometry(.64,.045,6,24),new THREE.MeshBasicMaterial({color:0xd4b45e}));checkpointMarker.rotation.x=-Math.PI/2;checkpointMarker.position.set(1.25,.04,.65);checkpointGroup.add(checkpointMarker);checkpointMarker.visible=!checkpointSearched;
+function searchCheckpoint(){if(checkpointSearched||Math.hypot(player.position.x+9.75,player.position.z+38.35)>3.2)return false;checkpointSearched=true;checkpointLid.rotation.x=-1.05;checkpointLid.position.set(0,.78,-.28);checkpointMarker.visible=false;wood+=5;stone+=3;food+=1;water+=1;refreshInventory();document.querySelector('#foodCount').textContent=food;document.querySelector('#waterCount').textContent=water;try{localStorage.setItem('lifeafterClassic_checkpoint_v1','searched')}catch(e){}saveGame();playGameSfx('pickup');hint.textContent='检查站物资：木头×5、石头×3、食物×1、水×1。墙上的字迹：别走北边公路，桥已经塌了。';return true}
 // V0.7.1: abandoned emergency radio and survivor field note
 const radioGroup=new THREE.Group();radioGroup.position.set(7,0,-40);scene.add(radioGroup);
 const radioMetal=new THREE.MeshStandardMaterial({color:0x555b55,metalness:.55,roughness:.72});
@@ -238,7 +257,7 @@ const radioMarker=new THREE.Mesh(new THREE.TorusGeometry(.72,.045,6,24),new THRE
 let radioNoteRead=false;try{radioNoteRead=localStorage.getItem('lifeafterClassic_radio_note_v1')==='read'}catch(e){}radioMarker.visible=!radioNoteRead;
 function readRadioNote(){if(radioNoteRead)return false;if(Math.hypot(player.position.x-7,player.position.z+40)>3.2)return false;radioNoteRead=true;radioMarker.visible=false;try{localStorage.setItem('lifeafterClassic_radio_note_v1','read')}catch(e){}playGameSfx('pickup');hint.textContent='录音残片：撤离前，北边公路连续传来三次求救信号。我们留下了最后一箱药品……';return true}
 function searchSupplyCrate(){if(supplyOpened)return false;if(Math.hypot(player.position.x-1,player.position.z+25)>3.2)return false;supplyOpened=true;crateLid.rotation.x=-1.05;crateLid.position.set(0,.78,-.27);crateMarker.visible=false;wood+=4;stone+=2;food+=1;water+=1;refreshInventory();document.querySelector('#foodCount').textContent=food;document.querySelector('#waterCount').textContent=water;try{localStorage.setItem('lifeafterClassic_supply_v1','opened')}catch(e){}saveGame();playGameSfx('pickup');hint.textContent='搜到废弃补给箱：木头×4、石头×2、食物×1、水×1';return true}
-function updateExplorationHint(){const rd=Math.hypot(player.position.x-7,player.position.z+40);if(!radioNoteRead&&rd<5){hint.textContent=rd<3.2?'发现废弃求救电台 · 点击交互读取记录':'前方有微弱的无线电信号';return}if(!supplyOpened){const d=Math.hypot(player.position.x-1,player.position.z+25);if(d<5){hint.textContent=d<3.2?'发现补给箱 · 点击交互搜索':'前方有一处废弃营地';return}}}
+function updateExplorationHint(){const rd=Math.hypot(player.position.x-7,player.position.z+40);if(!radioNoteRead&&rd<5){hint.textContent=rd<3.2?'发现废弃求救电台 · 点击交互读取记录':'前方有微弱的无线电信号';return}if(!checkpointSearched){const cd=Math.hypot(player.position.x+9.75,player.position.z+38.35);if(cd<5){hint.textContent=cd<3.2?'发现废弃公路检查站 · 点击交互搜索物资':'前方有一处废弃公路检查站';return}}if(!supplyOpened){const d=Math.hypot(player.position.x-1,player.position.z+25);if(d<5){hint.textContent=d<3.2?'发现补给箱 · 点击交互搜索':'前方有一处废弃营地';return}}}
 document.querySelector('#makeFire').addEventListener('click',buildCampfire);
 document.querySelector('#makeBench').addEventListener('click',buildWorkbench);
 document.querySelector('#makeBarricade').addEventListener('click',buildBarricade);
@@ -251,6 +270,7 @@ bagPanel.addEventListener('click',e=>{if(e.target===bagPanel)closeBag()});
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeBag();closeBuild();closeCraft()}});
 action.addEventListener('click',()=>{
  if(readRadioNote())return;
+ if(searchCheckpoint())return;
  if(searchSupplyCrate())return;
  if(lootDrop&&Math.hypot(lootDrop.position.x-player.position.x,lootDrop.position.z-player.position.z)<3.2){scene.remove(lootDrop);lootDrop=null;infectedLoot+=1;refreshInventory();playGameSfx('pickup');hint.textContent='拾取感染者物资 ×1';return}
  const t=nearest(trees),r=nearest(rocks);
