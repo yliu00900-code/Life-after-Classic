@@ -60,8 +60,11 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWid
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
 mount.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xcbd6d0,0x35402d,2.0));
+const hemi=new THREE.HemisphereLight(0xcbd6d0,0x35402d,2.0);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffe2b6,2.3);sun.position.set(-18,30,12);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-32;sun.shadow.camera.right=32;sun.shadow.camera.top=32;sun.shadow.camera.bottom=-32;scene.add(sun);
+// Accelerated day-night cycle and lightweight rain
+let worldClock=8.67,weatherClock=0,isRaining=false;const daySky=new THREE.Color(0x89938a),nightSky=new THREE.Color(0x182331),rainSky=new THREE.Color(0x56636a);const rainPositions=new Float32Array(360*2*3);for(let i=0;i<360;i++){const x=THREE.MathUtils.randFloatSpread(34),z=THREE.MathUtils.randFloatSpread(34),y=THREE.MathUtils.randFloat(2,17);rainPositions[i*6]=x;rainPositions[i*6+1]=y;rainPositions[i*6+2]=z;rainPositions[i*6+3]=x+.08;rainPositions[i*6+4]=y-.65;rainPositions[i*6+5]=z+.04}const rainGeometry=new THREE.BufferGeometry();rainGeometry.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));const rain=new THREE.LineSegments(rainGeometry,new THREE.LineBasicMaterial({color:0xb9cbd0,transparent:true,opacity:.48}));rain.visible=false;scene.add(rain);
+function updateWorld(dt){worldClock=(worldClock+dt*.1)%24;weatherClock+=dt;if(weatherClock>75){weatherClock=0;isRaining=!isRaining;rain.visible=isRaining}const daylight=THREE.MathUtils.clamp((Math.sin((worldClock-6)/24*Math.PI*2)+.18)*1.15,0,1);sun.intensity=.12+daylight*2.25;hemi.intensity=.42+daylight*1.58;sun.position.set(-18,8+daylight*25,12);const targetSky=daySky.clone().lerp(nightSky,1-daylight);if(isRaining)targetSky.lerp(rainSky,.48);scene.background.copy(targetSky);scene.fog.color.copy(targetSky);scene.fog.density=isRaining?.027:.018;const p=rainGeometry.attributes.position;for(let i=0;i<360;i++){let y=p.array[i*6+1]-.65*dt*13;if(y<.2){y=THREE.MathUtils.randFloat(8,17);p.array[i*6]=THREE.MathUtils.randFloatSpread(34);p.array[i*6+2]=THREE.MathUtils.randFloatSpread(34)}p.array[i*6+1]=y;p.array[i*6+4]=y-.65}p.needsUpdate=true;const hh=Math.floor(worldClock),mm=Math.floor((worldClock-hh)*60/5)*5;document.querySelector('#status').innerHTML='V0.4 · SURVIVAL<br>DAY 01　'+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+'<br>' +(isRaining?'☂ 降雨':'☀ '+(daylight<.18?'夜晚':daylight<.5?'黄昏/黎明':'晴朗'))}
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),new THREE.MeshStandardMaterial({color:0x4a5140,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.08;ground.receiveShadow=true;scene.add(ground);
 // Uneven forest floor patches
 for(let i=0;i<90;i++){const g=new THREE.CircleGeometry(THREE.MathUtils.randFloat(1,4),12);const m=new THREE.MeshStandardMaterial({color:[0x555442,0x3e4938,0x68614a,0x454b3d][i%4],roughness:1});const p=new THREE.Mesh(g,m);p.rotation.x=-Math.PI/2;p.position.set(THREE.MathUtils.randFloatSpread(95),-.055,THREE.MathUtils.randFloatSpread(95));p.scale.y=THREE.MathUtils.randFloat(.5,1.4);scene.add(p)}
@@ -151,7 +154,7 @@ action.addEventListener('click',()=>{
  else{hint.textContent='靠近树木或石块后才能采集'}
  setTimeout(()=>{if(hint.textContent!=='秋日森林 · 安全区外围')hint.textContent='秋日森林 · 安全区外围'},1700)
 });
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);updateWorld(dt);
 let ix=moveX+(keys.d?1:0)-(keys.a?1:0),iy=moveY+(keys.s?1:0)-(keys.w?1:0);const len=Math.hypot(ix,iy);if(len>1){ix/=len;iy/=len}
 const moving=Math.hypot(ix,iy)>.08;
 if(moving){const forward=new THREE.Vector3(Math.sin(cameraYaw),0,Math.cos(cameraYaw));const right=new THREE.Vector3(forward.z,0,-forward.x);const dir=forward.multiplyScalar(-iy).add(right.multiplyScalar(ix)).normalize();player.position.addScaledVector(dir,dt*3.2);yaw=Math.atan2(dir.x,dir.z);player.rotation.y=THREE.MathUtils.lerp(player.rotation.y,yaw,Math.min(1,dt*10))}
