@@ -19,7 +19,7 @@
 #look{position:absolute;right:0;bottom:0;width:54%;height:66%;pointer-events:auto;touch-action:none}
 #action{position:absolute;right:24px;bottom:calc(27px + env(safe-area-inset-bottom));width:66px;height:66px;border:1px solid #d8e1c877;border-radius:50%;background:#253326bb;color:#f2f2df;font-size:12px;pointer-events:auto}
 #action:active{background:#65724d}
-#inventory{position:fixed;top:116px;left:14px;padding:8px 10px;border:1px solid #c5d0b044;border-radius:4px;background:#111a13b8;font-size:12px;line-height:1.7;color:#e0e7d6;text-shadow:0 1px 4px #000;pointer-events:none}
+#inventory{position:fixed;top:116px;left:14px;padding:8px 10px;border:1px solid #c5d0b044;border-radius:4px;background:#111a13b8;font-size:12px;line-height:1.7;color:#e0e7d6;text-shadow:0 1px 4px #000;pointer-events:none}\n#bagButton{position:fixed;top:76px;right:14px;padding:9px 15px;border:1px solid #d8e1c877;border-radius:4px;background:#253326dd;color:#f2f2df;font-size:12px;pointer-events:auto}\n#bagPanel{position:fixed;inset:0;display:none;place-items:center;background:#050905b9;z-index:4;padding:22px}\n#bagPanel.open{display:grid}\n.bag-card{width:min(340px,100%);padding:18px;border:1px solid #aeb99a88;border-radius:6px;background:linear-gradient(145deg,#263126,#111812);box-shadow:0 16px 50px #000b}\n.bag-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:17px;letter-spacing:2px}\n#bagClose{border:1px solid #aeb99a66;background:#303b2e;color:#e8eee5;border-radius:4px;padding:6px 11px}\n.bag-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}\n.bag-slot{min-height:104px;padding:13px;border:1px solid #aeb99a44;border-radius:4px;background:#0b120dbb}\n.bag-icon{font-size:28px;margin-bottom:8px}.bag-name{font-size:12px;color:#cbd5c1}.bag-count{float:right;font-size:18px;color:#f3f0d9;font-weight:700}\n.bag-note{margin-top:14px;font-size:11px;color:#aeb99a}
 #foot{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:10px;color:#d4ddc888;white-space:nowrap;pointer-events:none}
 #loading{position:fixed;inset:0;display:grid;place-items:center;background:#111812;z-index:5;color:#dfe7d7;font-size:13px;letter-spacing:2px}
 @media(min-width:800px){#joy{width:140px;height:140px}#stick{left:43px;top:43px}#look{width:58%}}
@@ -30,7 +30,7 @@
 <div id="game"></div><div id="vignette"></div>
 <div id="top"><div class="brand">SURVIVAL PROJECT<b>LIFEAFTER CLASSIC</b></div><div id="status">V0.2 · GATHERING TEST<br>DAY 01　08:40</div></div>
 <div id="hint">秋日森林 · 安全区外围</div><div id="inventory">背包资源<br>木头：<b id="wood">0</b>　石头：<b id="stone">0</b></div>
-<div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button></div>
+<button id="bagButton" aria-label="打开背包">背包</button><div id="bagPanel" aria-hidden="true"><div class="bag-card"><div class="bag-head"><span>生存背包</span><button id="bagClose">关闭</button></div><div class="bag-grid"><div class="bag-slot"><div class="bag-icon">🪵</div><span class="bag-name">木头</span><span class="bag-count" id="bagWood">0</span></div><div class="bag-slot"><div class="bag-icon">🪨</div><span class="bag-name">石头</span><span class="bag-count" id="bagStone">0</span></div></div><div class="bag-note">资源会在采集成功后自动存入背包</div></div></div>\n<div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button></div>
 <div id="foot">靠近资源后点击交互采集</div>
 <div id="loading">正在生成森林环境…</div>
 <script type="module">
@@ -91,7 +91,7 @@ const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addE
 let wood=0,stone=0;
 const hint=document.querySelector('#hint'),action=document.querySelector('#action');
 function nearest(list){let found=null,dist=3.2;for(const obj of list){const d=Math.hypot(obj.position.x-player.position.x,obj.position.z-player.position.z);if(d<dist){dist=d;found=obj}}return found}
-function refreshInventory(){document.querySelector('#wood').textContent=wood;document.querySelector('#stone').textContent=stone}
+function refreshInventory(){document.querySelector('#wood').textContent=wood;document.querySelector('#stone').textContent=stone;document.querySelector('#bagWood').textContent=wood;document.querySelector('#bagStone').textContent=stone}\nconst bagPanel=document.querySelector('#bagPanel');\ndocument.querySelector('#bagButton').addEventListener('click',()=>{bagPanel.classList.add('open');bagPanel.setAttribute('aria-hidden','false')});\nfunction closeBag(){bagPanel.classList.remove('open');bagPanel.setAttribute('aria-hidden','true')}\ndocument.querySelector('#bagClose').addEventListener('click',closeBag);\nbagPanel.addEventListener('click',e=>{if(e.target===bagPanel)closeBag()});\naddEventListener('keydown',e=>{if(e.key==='Escape')closeBag()});
 action.addEventListener('click',()=>{
  const t=nearest(trees),r=nearest(rocks);
  if(t){t.userData.hits++;if(t.userData.hits>=3){scene.remove(t);trees.splice(trees.indexOf(t),1);wood+=3;refreshInventory();hint.textContent='获得木头 ×3'}else{hint.textContent='正在砍伐树木…（'+t.userData.hits+'/3）'}}
