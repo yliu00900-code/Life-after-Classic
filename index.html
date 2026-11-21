@@ -18,7 +18,7 @@
 #stick{position:absolute;width:52px;height:52px;left:36px;top:36px;border-radius:50%;background:linear-gradient(145deg,#d9e0c9bb,#71836caa);border:1px solid #eef5df88;box-shadow:0 4px 16px #0008}
 #look{position:absolute;right:0;bottom:0;width:54%;height:66%;pointer-events:auto;touch-action:none}
 #action{position:absolute;right:24px;bottom:calc(27px + env(safe-area-inset-bottom));width:66px;height:66px;border:1px solid #d8e1c877;border-radius:50%;background:#253326bb;color:#f2f2df;font-size:12px;pointer-events:auto}
-#action:active{background:#65724d}
+#action:active{background:#65724d}#attack:active{background:#9a4938}
 #inventory{position:fixed;top:116px;left:14px;padding:8px 10px;border:1px solid #c5d0b044;border-radius:4px;background:#111a13b8;font-size:12px;line-height:1.7;color:#e0e7d6;text-shadow:0 1px 4px #000;pointer-events:none}
 #bagButton{position:fixed;top:76px;right:14px;padding:9px 15px;border:1px solid #d8e1c877;border-radius:4px;background:#253326dd;color:#f2f2df;font-size:12px;pointer-events:auto}
 #bagPanel{position:fixed;inset:0;display:none;place-items:center;background:#050905b9;z-index:4;padding:22px}
@@ -40,9 +40,9 @@
 <body>
 <div id="game"></div><div id="vignette"></div>
 <div id="top"><div class="brand">SURVIVAL PROJECT<b>LIFEAFTER CLASSIC</b></div><div id="status">V0.2 · GATHERING TEST<br>DAY 01　08:40</div></div>
-<div id="hint">秋日森林 · 安全区外围</div><div id="threat">幸存者状态　生命值 <b id="hpText">100</b>/100<div id="hpTrack"><div id="hpFill"></div></div><div id="enemyText">附近：暂未发现感染者</div></div><div id="inventory">背包资源<br>木头：<b id="wood">0</b>　石头：<b id="stone">0</b></div>
+<div id="hint">秋日森林 · 安全区外围</div><div id="threat">幸存者状态　生命值 <b id="hpText">100</b>/100<div id="hpTrack"><div id="hpFill"></div></div><div id="enemyText">附近：暂未发现感染者</div><div id="enemyHealth" style="display:none;margin-top:6px">感染者 <b id="enemyHPText">100</b>/100<div id="enemyHPTrack" style="height:5px;margin-top:4px;background:#4a302b;border-radius:5px;overflow:hidden"><div id="enemyHPFill" style="height:100%;width:100%;background:#a9a35c;transition:width .15s"></div></div></div></div><div id="inventory">背包资源<br>木头：<b id="wood">0</b>　石头：<b id="stone">0</b></div>
 <button id="bagButton" aria-label="打开背包">背包</button><div id="bagPanel" aria-hidden="true"><div class="bag-card"><div class="bag-head"><span>生存背包</span><button id="bagClose">关闭</button></div><div class="bag-grid"><div class="bag-slot"><div class="bag-icon">🪵</div><span class="bag-name">木头</span><span class="bag-count" id="bagWood">0</span></div><div class="bag-slot"><div class="bag-icon">🪨</div><span class="bag-name">石头</span><span class="bag-count" id="bagStone">0</span></div></div><div class="bag-note">资源会在采集成功后自动存入背包</div></div></div>
-<div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button></div>
+<div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button><button id="attack" style="position:absolute;right:24px;bottom:calc(108px + env(safe-area-inset-bottom));width:66px;height:66px;border:1px solid #d8a08c99;border-radius:50%;background:#492a25dd;color:#ffe8dc;font-size:13px;pointer-events:auto">攻击</button></div>
 <div id="foot">靠近资源后点击交互采集</div>
 <div id="loading">正在生成森林环境…</div>
 <script type="module">
@@ -98,8 +98,8 @@ for(const ex of [-.105,.105]){const eye=new THREE.Mesh(new THREE.SphereGeometry(
 for(const side of [-1,1]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.55,3,6),zombieSkin);arm.position.set(side*.48,1.12,-.12);arm.rotation.z=side*.22;infected.add(arm);const leg=new THREE.Mesh(new THREE.CylinderGeometry(.13,.16,.68,6),tornClothes);leg.position.set(side*.19,.35,0);infected.add(leg)}
 const infectedShadow=new THREE.Mesh(new THREE.CircleGeometry(.58,16),new THREE.MeshBasicMaterial({color:0x080b08,transparent:true,opacity:.4}));infectedShadow.rotation.x=-Math.PI/2;infectedShadow.position.y=.02;infected.add(infectedShadow);
 const infectedMarker=new THREE.Mesh(new THREE.TorusGeometry(.78,.055,6,28),new THREE.MeshStandardMaterial({color:0x9d4033,emissive:0x54170f,emissiveIntensity:.8,roughness:.8}));infectedMarker.rotation.x=Math.PI/2;infectedMarker.position.y=.035;infected.add(infectedMarker);
-const infectedHome=new THREE.Vector3(.8,0,2);let infectedMode='wander',wanderClock=0,attackClock=0,playerHP=100;
-const hpText=document.querySelector('#hpText'),hpFill=document.querySelector('#hpFill'),enemyText=document.querySelector('#enemyText');
+const infectedHome=new THREE.Vector3(.8,0,2);let infectedMode='wander',wanderClock=0,attackClock=0,playerHP=100,infectedHP=100,infectedAlive=true,attackCooldown=0,hitFlash=0;
+const hpText=document.querySelector('#hpText'),hpFill=document.querySelector('#hpFill'),enemyText=document.querySelector('#enemyText');\nconst enemyHealth=document.querySelector('#enemyHealth'),enemyHPText=document.querySelector('#enemyHPText'),enemyHPFill=document.querySelector('#enemyHPFill');\ndocument.querySelector('#attack').addEventListener('click',()=>{if(!infectedAlive){hint.textContent='附近没有可攻击的感染者';return}const d=Math.hypot(player.position.x-infected.position.x,player.position.z-infected.position.z);if(d>2.8){hint.textContent='距离太远，靠近感染者再攻击';return}if(attackCooldown>0)return;attackCooldown=.55;infectedHP=Math.max(0,infectedHP-25);enemyHealth.style.display='block';enemyHPText.textContent=infectedHP;enemyHPFill.style.width=infectedHP+'%';hitFlash=.22;zombieBody.material.emissive.setHex(0x7a2118);zombieBody.material.emissiveIntensity=1.2;infected.position.x+=(infected.position.x-player.position.x)*.12;infected.position.z+=(infected.position.z-player.position.z)*.12;if(infectedHP===0){infectedAlive=false;scene.remove(infected);enemyText.textContent='感染者已被击败';hint.textContent='感染者已倒下！'}else{hint.textContent='命中感染者！生命值 -25'}});
 function updateInfected(dt){
  const dx=player.position.x-infected.position.x,dz=player.position.z-infected.position.z,dist=Math.hypot(dx,dz);
  if(dist<10)infectedMode='chase';else if(dist>15)infectedMode='wander';
