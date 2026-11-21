@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#111812">
+<title>LifeAfter Classic · V0.1</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101812;color:#e8eee5;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;touch-action:none}
+#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
+#vignette{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(5,12,8,.52),transparent 25%,transparent 65%,rgba(5,10,7,.5)),radial-gradient(ellipse,transparent 45%,rgba(0,0,0,.38))}
+#top{position:fixed;top:env(safe-area-inset-top,12px);left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.brand{font-size:12px;letter-spacing:2px;color:#d5dfcc;text-shadow:0 2px 8px #000}.brand b{display:block;font-size:17px;letter-spacing:1px;color:#f1f3e9}
+#status{font-size:11px;color:#d1d9c9;text-align:right;text-shadow:0 2px 8px #000}
+#hint{position:fixed;top:76px;left:50%;transform:translateX(-50%);padding:7px 12px;border:1px solid #b8c3a044;border-radius:4px;background:#111a13a8;font-size:11px;color:#dce4d2;white-space:nowrap;pointer-events:none}
+#controls{position:fixed;inset:0;pointer-events:none}
+#joy{position:absolute;left:25px;bottom:calc(25px + env(safe-area-inset-bottom));width:126px;height:126px;border:1px solid #e2ead044;border-radius:50%;background:#dce8d00e;pointer-events:auto;touch-action:none}
+#stick{position:absolute;width:52px;height:52px;left:36px;top:36px;border-radius:50%;background:linear-gradient(145deg,#d9e0c9bb,#71836caa);border:1px solid #eef5df88;box-shadow:0 4px 16px #0008}
+#look{position:absolute;right:0;bottom:0;width:54%;height:66%;pointer-events:auto;touch-action:none}
+#action{position:absolute;right:24px;bottom:calc(27px + env(safe-area-inset-bottom));width:66px;height:66px;border:1px solid #d8e1c877;border-radius:50%;background:#253326bb;color:#f2f2df;font-size:12px;pointer-events:auto}
+#action:active{background:#65724d}
+#foot{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:10px;color:#d4ddc888;white-space:nowrap;pointer-events:none}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:#111812;z-index:5;color:#dfe7d7;font-size:13px;letter-spacing:2px}
+@media(min-width:800px){#joy{width:140px;height:140px}#stick{left:43px;top:43px}#look{width:58%}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+<div id="game"></div><div id="vignette"></div>
+<div id="top"><div class="brand">SURVIVAL PROJECT<b>LIFEAFTER CLASSIC</b></div><div id="status">V0.1 · FOREST TEST<br>DAY 01　08:40</div></div>
+<div id="hint">秋日森林 · 安全区外围</div>
+<div id="controls"><div id="look" aria-label="拖动旋转视角"></div><div id="joy"><div id="stick"></div></div><button id="action">交互</button></div>
+<div id="foot">左侧摇杆移动 · 右侧区域拖动视角</div>
+<div id="loading">正在生成森林环境…</div>
+<script type="module">
+import * as THREE from 'three';
+const mount=document.querySelector('#game');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x89938a);
+scene.fog=new THREE.FogExp2(0x89938a,0.018);
+const camera=new THREE.PerspectiveCamera( sixty(),innerWidth/innerHeight,.1,180);
+function sixty(){return  sixtyValue= sixtyValue||62} let sixtyValue=0;
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xcbd6d0,0x35402d,2.0));
+const sun=new THREE.DirectionalLight(0xffe2b6,2.3);sun.position.set(-18,30,12);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-32;sun.shadow.camera.right=32;sun.shadow.camera.top=32;sun.shadow.camera.bottom=-32;scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),new THREE.MeshStandardMaterial({color:0x4a5140,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.08;ground.receiveShadow=true;scene.add(ground);
+// Uneven forest floor patches
+for(let i=0;i<90;i++){const g=new THREE.CircleGeometry(THREE.MathUtils.randFloat(1,4),12);const m=new THREE.MeshStandardMaterial({color:[0x555442,0x3e4938,0x68614a,0x454b3d][i%4],roughness:1});const p=new THREE.Mesh(g,m);p.rotation.x=-Math.PI/2;p.position.set(THREE.MathUtils.randFloatSpread(95),-.055,THREE.MathUtils.randFloatSpread(95));p.scale.y=THREE.MathUtils.randFloat(.5,1.4);scene.add(p)}
+// Faint muddy trail
+const trail=new THREE.Mesh(new THREE.PlaneGeometry(5,95),new THREE.MeshStandardMaterial({color:0x75664c,roughness:1}));trail.rotation.x=-Math.PI/2;trail.position.set(0,-.045,-16);trail.rotation.z=.09;scene.add(trail);
+const trunkMat=new THREE.MeshStandardMaterial({color:0x514235,roughness:1});
+const leafMats=[0x3f5140,0x4b5b43,0x59634a,0x394b3d].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:1}));
+const trees=[];
+function tree(x,z,s=1){const group=new THREE.Group();group.position.set(x,0,z);group.scale.setScalar(s);
+const h=THREE.MathUtils.randFloat(4.5,7.8);const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.16,.32,h,7),trunkMat);trunk.position.y=h/2;trunk.castShadow=true;group.add(trunk);
+for(let j=0;j<3;j++){const crown=new THREE.Mesh(new THREE.ConeGeometry(THREE.MathUtils.randFloat(1.5,2.3),THREE.MathUtils.randFloat(3,4.2),7),leafMats[Math.floor(Math.random()*leafMats.length)]);crown.position.y=h*.63+j*.82;crown.rotation.y=Math.random()*3;crown.castShadow=true;group.add(crown)}
+scene.add(group);trees.push(group)}
+for(let i=0;i<115;i++){let x,z;do{x=THREE.MathUtils.randFloatSpread(92);z=THREE.MathUtils.randFloatSpread(92)}while(Math.abs(x)<5&&z>-30&&z<22);tree(x,z,THREE.MathUtils.randFloat(.75,1.35))}
+const rockMat=new THREE.MeshStandardMaterial({color:0x66675e,roughness:1});
+for(let i=0;i<34;i++){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(THREE.MathUtils.randFloat(.35,1.25),0),rockMat);r.position.set(THREE.MathUtils.randFloatSpread(75),.3,THREE.MathUtils.randFloatSpread(75));r.scale.y=THREE.MathUtils.randFloat(.5,1);r.rotation.set(Math.random(),Math.random(),Math.random());r.castShadow=true;r.receiveShadow=true;scene.add(r)}
+// Player: muted field jacket, backpack and head
+const player=new THREE.Group();scene.add(player);
+const jacket=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.85,4,8),new THREE.MeshStandardMaterial({color:0x59634c,roughness:.95}));jacket.position.y=1.15;jacket.castShadow=true;player.add(jacket);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),new THREE.MeshStandardMaterial({color:0xb58c6c,roughness:1}));head.position.y=1.95;head.castShadow=true;player.add(head);
+const hair=new THREE.Mesh(new THREE.SphereGeometry(.275,12,8,0,Math.PI*2,0,Math.PI*.52),new THREE.MeshStandardMaterial({color:0x292a24}));hair.position.y=2.03;player.add(hair);
+const pack=new THREE.Mesh(new THREE.BoxGeometry(.52,.68,.28),new THREE.MeshStandardMaterial({color:0x393b30,roughness:1}));pack.position.set(0,1.25,.48);pack.castShadow=true;player.add(pack);
+for(const x of [-.22,.22]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.14,.16,.72,7),new THREE.MeshStandardMaterial({color:0x343b32}));leg.position.set(x,.38,0);player.add(leg)}
+player.position.set(0,0,8);
+const shadow=new THREE.Mesh(new THREE.CircleGeometry(.65,20),new THREE.MeshBasicMaterial({color:0x11150f,transparent:true,opacity:.35}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.015;player.add(shadow);
+let yaw=0,moveX=0,moveY=0,cameraYaw=0,cameraPitch=.18;
+const clock=new THREE.Clock();
+const joy=document.querySelector('#joy'),stick=document.querySelector('#stick');let joyId=null;
+function setJoy(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=43,l=Math.hypot(dx,dy);if(l>max){dx=dx/l*max;dy=dy/l*max}moveX=dx/max;moveY=dy/max;stick.style.transform=`translate(${dx}px,${dy}px)`}
+joy.addEventListener('pointerdown',e=>{joyId=e.pointerId;joy.setPointerCapture(joyId);setJoy(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===joyId)setJoy(e)});
+function endJoy(){joyId=null;moveX=moveY=0;stick.style.transform='translate(0,0)'}
+joy.addEventListener('pointerup',endJoy);joy.addEventListener('pointercancel',endJoy);
+const look=document.querySelector('#look');let lookId=null,lastX=0,lastY=0;
+look.addEventListener('pointerdown',e=>{lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;look.setPointerCapture(lookId)});
+look.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;cameraYaw-=(e.clientX-lastX)*.006;cameraPitch=THREE.MathUtils.clamp(cameraPitch+(e.clientY-lastY)*.004,-.05,.75);lastX=e.clientX;lastY=e.clientY});
+function endLook(){lookId=null}look.addEventListener('pointerup',endLook);look.addEventListener('pointercancel',endLook);
+const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+document.querySelector('#action').addEventListener('click',()=>{const h=document.querySelector('#hint');h.textContent='附近暂时没有可交互目标';setTimeout(()=>h.textContent='秋日森林 · 安全区外围',1800)});
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
+let ix=moveX+(keys.d?1:0)-(keys.a?1:0),iy=moveY+(keys.s?1:0)-(keys.w?1:0);const len=Math.hypot(ix,iy);if(len>1){ix/=len;iy/=len}
+const moving=Math.hypot(ix,iy)>.08;
+if(moving){const forward=new THREE.Vector3(Math.sin(cameraYaw),0,Math.cos(cameraYaw));const right=new THREE.Vector3(forward.z,0,-forward.x);const dir=forward.multiplyScalar(-iy).add(right.multiplyScalar(ix)).normalize();player.position.addScaledVector(dir,dt*3.2);yaw=Math.atan2(dir.x,dir.z);player.rotation.y=THREE.MathUtils.lerp(player.rotation.y,yaw,Math.min(1,dt*10))}
+const target=new THREE.Vector3(player.position.x,1.25,player.position.z);
+const distance=6.3, horiz=Math.cos(cameraPitch)*distance, vert=Math.sin(cameraPitch)*distance+1.4;
+const desired=new THREE.Vector3(target.x+Math.sin(cameraYaw)*horiz,target.y+vert,target.z+Math.cos(cameraYaw)*horiz);
+camera.position.lerp(desired,1-Math.pow(.001,dt));camera.lookAt(target);
+renderer.render(scene,camera)}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7))});
+document.querySelector('#loading').style.display='none';
+</script>
+</body></html>
